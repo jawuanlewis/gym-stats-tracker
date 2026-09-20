@@ -1,0 +1,16 @@
+{
+  "printWidth": 100,
+  "trailingComma": "all",
+  "plugins": ["prettier-plugin-sql"],
+  "overrides": [
+    {
+      "files": "*.sql",
+      "options": {
+        "language": "postgresql",
+        "keywordCase": "lower",
+        "dataTypeCase": "lower",
+        "functionCase": "lower"
+      }
+    }
+  ]
+}

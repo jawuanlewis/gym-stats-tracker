@@ -1,0 +1,12 @@
+# Generated / vendored
+.next/
+node_modules/
+next-env.d.ts
+pnpm-lock.yaml
+
+# Local JSON data store — rewritten by the app, not by hand
+.data/
+
+# Next.js scaffold assets. Prettier has no SVG parser without @prettier/plugin-xml,
+# and running one over these minified files would only inflate them.
+public/*.svg

@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/**
+ * Dark navy is the only theme today. Every color the app uses is a token here —
+ * no component hardcodes a hex value. Adding light mode later is a second block
+ * of these same variables under [data-theme="light"] plus a toggle, not a refactor.
+ */
+:root,
+[data-theme="dark"] {
+  --background: #0a1122;
+  --surface: #111c33;
+  --surface-raised: #17243f;
+  --border: #22325a;
+  --foreground: #e8eefb;
+  --muted: #92a6cb;
+  --accent: #4f8cff;
+  --accent-muted: #2b4d8f;
+  --accent-foreground: #04102a;
+  --danger: #ff6b81;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  /* Steppers are tapped repeatedly; stop iOS from selecting labels mid-tap. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The one thing that must not happen at the gym: a stray double-tap zooming the page. */
+button {
+  touch-action: manipulation;
 }
