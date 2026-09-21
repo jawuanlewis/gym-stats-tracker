@@ -31,19 +31,22 @@ pnpm lint
 
 ## Storage
 
-The data layer sits behind a single `ExerciseRepository` interface in
-`src/features/exercises/repository.ts`. Nothing above it — service, actions,
-components — knows where the data lives.
+Supabase (Postgres). The data layer sits behind a single `ExerciseRepository`
+interface in `src/features/exercises/repository.ts` — service, actions, and
+components have no idea where the data lives, so swapping stores means writing
+another implementation and reassigning one export.
 
-Right now the only implementation is a JSON file at `.data/exercises.json`
-(gitignored). It persists across restarts and makes local development real, but it
-**will not work on Vercel**, whose filesystem is read-only.
+`sets` is a single `jsonb` column shaped `[{ "reps": 10, "weight": null }]`. A null
+set weight means "inherit the exercise weight"; nothing writes a non-null value yet,
+but per-set weight (drop sets) needs no migration because the shape already allows it.
 
-Moving to Supabase means writing a second implementation of that interface and
-reassigning `exerciseRepository` at the bottom of the file. The Postgres schema is
-ready in [`supabase/schema.sql`](supabase/schema.sql) — it includes an append-only
-`exercise_events` table so progression history starts accumulating before anything
-reads it.
+Setup:
+
+1. Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL editor.
+2. Copy `.env.example` to `.env.local` and fill in the project URL and the
+   **service_role** key from Project Settings → API.
+
+The app starts empty — add your exercises through the UI.
 
 ## Architecture notes
 

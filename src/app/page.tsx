@@ -20,6 +20,12 @@ export default async function HomePage() {
       </header>
 
       <div className="space-y-8">
+        {exercises.length === 0 ? (
+          <p className="rounded-2xl border border-border bg-surface px-4 py-8 text-center text-sm text-muted">
+            Nothing tracked yet. Add your first exercise below.
+          </p>
+        ) : null}
+
         {CATEGORIES.map((category) => {
           const inCategory = exercises.filter((exercise) => exercise.category === category);
           if (inCategory.length === 0) return null;

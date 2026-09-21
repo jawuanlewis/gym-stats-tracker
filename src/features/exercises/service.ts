@@ -2,6 +2,7 @@ import "server-only";
 
 import { getIncrements, MINIMUMS } from "@/lib/settings";
 
+import { DuplicateExerciseNameError } from "./errors";
 import { roundValue } from "./format";
 import { exerciseRepository } from "./repository";
 import {
@@ -40,10 +41,26 @@ export async function createExercise(input: NewExercise): Promise<ServiceResult<
   }
   if (input.sets.length === 0) return { ok: false, error: "Add at least one set." };
 
-  return {
-    ok: true,
-    data: await exerciseRepository.create({ ...input, name, weight: roundValue(input.weight) }),
-  };
+  try {
+    return {
+      ok: true,
+      data: await exerciseRepository.create({ ...input, name, weight: roundValue(input.weight) }),
+    };
+  } catch (error) {
+    return asDuplicateResult(error, name);
+  }
+}
+
+/**
+ * The checks above are read-then-write, so the unique index can still reject a
+ * write that raced past them. Surface that as the same message rather than an
+ * unhandled error.
+ */
+function asDuplicateResult<T>(error: unknown, name: string): ServiceResult<T> {
+  if (error instanceof DuplicateExerciseNameError) {
+    return { ok: false, error: `"${name}" is already on your list.` };
+  }
+  throw error;
 }
 
 export async function renameExercise(id: string, name: string): Promise<ServiceResult<Exercise>> {
@@ -55,7 +72,11 @@ export async function renameExercise(id: string, name: string): Promise<ServiceR
     return { ok: false, error: `"${existing.name}" is already on your list.` };
   }
 
-  return { ok: true, data: await exerciseRepository.update(id, { name: trimmed }) };
+  try {
+    return { ok: true, data: await exerciseRepository.update(id, { name: trimmed }) };
+  } catch (error) {
+    return asDuplicateResult(error, trimmed);
+  }
 }
 
 async function requireExercise(id: string): Promise<Exercise> {

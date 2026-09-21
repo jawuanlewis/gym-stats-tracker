@@ -21,12 +21,14 @@ edited by tapping steppers. Replaces a Google Sheet. Single user, no auth.
 Feature-foldered under `src/features/exercises/`, layered so storage is swappable:
 
 ```text
-types.ts       shared types + MAX_SETS — client-safe, no server imports
-format.ts      display formatting + roundValue — client-safe
-repository.ts  ExerciseRepository interface + JSON-file impl  (server-only)
-service.ts     business rules: validation, dedupe, stepper math (server-only)
-actions.ts     "use server" wrappers, each ending in refresh()
-components/    client components
+types.ts               shared types + MAX_SETS — client-safe, no server imports
+format.ts              display formatting + roundValue — client-safe
+errors.ts              DuplicateExerciseNameError (no deps, breaks an import cycle)
+repository.ts          ExerciseRepository interface + the active impl (server-only)
+repository.supabase.ts Supabase implementation + row mapping    (server-only)
+service.ts             business rules: validation, dedupe, stepper math (server-only)
+actions.ts             "use server" wrappers, each ending in refresh()
+components/            client components
 ```
 
 `src/lib/settings.ts` owns increment sizes (weight 2.5, reps 1) and minimums.
@@ -62,8 +64,12 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
 - **The page needs `export const dynamic = "force-dynamic"`.** Without it the list is
   prerendered as a static shell at build time, because nothing in it uses a dynamic
   API that Next tracks.
-- **The JSON store does not work on Vercel** (read-only filesystem). It is local-dev
-  scaffolding until the Supabase implementation lands; `supabase/schema.sql` is ready.
+- **`numeric` arrives from PostgREST as a string.** `weight` must go through
+  `Number()` in the row mapping, or `"110.00" + 2.5` concatenates instead of adding.
+- **The Supabase client is built lazily**, on first call rather than at module scope,
+  so `next build` works on a machine with no credentials.
+- **`findByName` compares in JS, not with `ilike`**, which would treat `%` and `_` in
+  an exercise name as wildcards. The unique index is the real guarantee.
 - **Server Actions are reachable by direct POST.** There is no auth today; if this
   ever gains a second user, every action in `actions.ts` needs an authorization check.
 - **The preview tool resolves the `.claude/launch.json` in the parent workspace
