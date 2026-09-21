@@ -42,3 +42,20 @@ create index exercise_events_exercise_idx on exercise_events (exercise_id, recor
 alter table exercises enable row level security;
 
 alter table exercise_events enable row level security;
+
+-- RLS bypass and table privileges are SEPARATE mechanisms. service_role skips
+-- RLS, but still needs a GRANT or every query fails with 42501
+-- ("permission denied for table ..."). Supabase's default privileges usually
+-- cover this; they did not on this project, so grant explicitly.
+--
+-- Deliberately NOT granted to anon or authenticated: no browser-side role
+-- should be able to touch these tables.
+grant usage on schema public to service_role;
+
+grant all privileges on table public.exercises to service_role;
+
+grant all privileges on table public.exercise_events to service_role;
+
+-- Same grant for any table added to this schema later.
+alter default privileges in schema public
+grant all on tables to service_role;
