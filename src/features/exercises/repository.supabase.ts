@@ -4,7 +4,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 
 import { getSupabase } from "@/lib/supabase";
 
-import { DuplicateExerciseNameError } from "./errors";
+import { DatabaseError, DuplicateExerciseNameError } from "./errors";
 import type { ExerciseRepository } from "./repository";
 import type { Category, Exercise } from "./types";
 
@@ -18,7 +18,7 @@ type ExerciseRow = {
   id: string;
   name: string;
   category: Category;
-  /** `numeric` arrives as a string over the wire — see `toDomain`. */
+  /** See `toDomain` for why this is widened. */
   weight: string | number;
   sets: SetRow[] | null;
   created_at: string;
@@ -26,9 +26,13 @@ type ExerciseRow = {
 };
 
 /**
- * Postgres `numeric` is serialized as a STRING by PostgREST to avoid float
- * precision loss. Without this conversion, `"110.00" + 2.5` would concatenate
- * into `"110.002.5"` rather than adding.
+ * PostgREST emits `numeric` as an unquoted JSON number, so `weight` already
+ * parses as a number and this cast is a no-op today. It stays as a guard: the
+ * raw wire value is `110.00`, and any layer that ever hands it over quoted
+ * would otherwise turn `weight + 2.5` into string concatenation.
+ *
+ * (The "numeric arrives as a string" behavior is real, but belongs to the
+ * node-postgres driver, not to PostgREST.)
  */
 function toDomain(row: ExerciseRow): Exercise {
   return {
@@ -47,23 +51,23 @@ function toSetRows(sets: number[]): SetRow[] {
   return sets.map((reps) => ({ reps, weight: null }));
 }
 
-function rethrow(error: PostgrestError, name?: string): never {
+function rethrow(operation: string, error: PostgrestError, name?: string): never {
   if (error.code === UNIQUE_VIOLATION) {
     throw new DuplicateExerciseNameError(name ?? "that exercise");
   }
-  throw new Error(`Supabase: ${error.message}`);
+  throw new DatabaseError(operation, error);
 }
 
 export const supabaseExerciseRepository: ExerciseRepository = {
   async list() {
     const { data, error } = await getSupabase().from(TABLE).select("*");
-    if (error) rethrow(error);
+    if (error) rethrow("list exercises", error);
     return (data as ExerciseRow[]).map(toDomain);
   },
 
   async findById(id) {
     const { data, error } = await getSupabase().from(TABLE).select("*").eq("id", id).maybeSingle();
-    if (error) rethrow(error);
+    if (error) rethrow("find exercise by id", error);
     return data ? toDomain(data as ExerciseRow) : null;
   },
 
@@ -74,7 +78,7 @@ export const supabaseExerciseRepository: ExerciseRepository = {
    */
   async findByName(name) {
     const { data, error } = await getSupabase().from(TABLE).select("*");
-    if (error) rethrow(error);
+    if (error) rethrow("find exercise by name", error);
 
     const target = name.trim().toLowerCase();
     const match = (data as ExerciseRow[]).find((row) => row.name.trim().toLowerCase() === target);
@@ -92,7 +96,7 @@ export const supabaseExerciseRepository: ExerciseRepository = {
       })
       .select()
       .single();
-    if (error) rethrow(error, input.name);
+    if (error) rethrow("create exercise", error, input.name);
     return toDomain(data as ExerciseRow);
   },
 
@@ -109,12 +113,12 @@ export const supabaseExerciseRepository: ExerciseRepository = {
       .eq("id", id)
       .select()
       .single();
-    if (error) rethrow(error, patch.name);
+    if (error) rethrow("update exercise", error, patch.name);
     return toDomain(data as ExerciseRow);
   },
 
   async remove(id) {
     const { error } = await getSupabase().from(TABLE).delete().eq("id", id);
-    if (error) rethrow(error);
+    if (error) rethrow("delete exercise", error);
   },
 };

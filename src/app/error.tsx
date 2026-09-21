@@ -11,8 +11,8 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
       <div className="rounded-2xl border border-border bg-surface p-6">
         <h1 className="text-lg font-semibold">Could not load your stats</h1>
         <p className="mt-2 text-sm text-muted">
-          This usually means the database connection is not configured. Check that
-          NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.
+          This usually means the database connection is not configured. Check that SUPABASE_URL and
+          SUPABASE_SERVICE_ROLE_KEY are set.
         </p>
         <button
           type="button"

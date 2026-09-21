@@ -11,19 +11,20 @@ let cached: SupabaseClient | null = null;
  * fail on any machine without credentials. Building on first call keeps the
  * failure at request time, where it can be reported usefully.
  *
- * This uses the service-role key, which bypasses row-level security. It must
- * never reach the browser — hence `server-only` and no NEXT_PUBLIC_ prefix.
+ * Neither value carries a NEXT_PUBLIC_ prefix, so neither is inlined into the
+ * client bundle. The service-role key bypasses row-level security and must never
+ * reach the browser; the URL simply has no reason to be there.
  */
 export function getSupabase(): SupabaseClient {
   if (cached) return cached;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) {
     throw new Error(
       "Supabase is not configured. Copy .env.example to .env.local and set " +
-        "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+        "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
     );
   }
 

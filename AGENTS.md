@@ -64,8 +64,9 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
 - **The page needs `export const dynamic = "force-dynamic"`.** Without it the list is
   prerendered as a static shell at build time, because nothing in it uses a dynamic
   API that Next tracks.
-- **`numeric` arrives from PostgREST as a string.** `weight` must go through
-  `Number()` in the row mapping, or `"110.00" + 2.5` concatenates instead of adding.
+- **`numeric` arrives from PostgREST as an unquoted JSON number**, so `weight`
+  needs no conversion; the `Number()` in the row mapping is a guard, not a fix.
+  (The "numeric is a string" gotcha is real but belongs to node-postgres.)
 - **The Supabase client is built lazily**, on first call rather than at module scope,
   so `next build` works on a machine with no credentials.
 - **`findByName` compares in JS, not with `ilike`**, which would treat `%` and `_` in
