@@ -11,7 +11,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # Project Context - `gym-stats-tracker`
 
 Mobile-first gym tracker: a list of exercises, each with a weight and per-set reps,
-edited by tapping steppers. Replaces a Google Sheet. Single user, no auth.
+edited by tapping steppers. Replaces a Google Sheet. Multi-user: passwordless
+sign-in (emailed one-time code) via Supabase Auth, open signup.
 
 > The heading above sits below the Next.js managed block because `next dev` rewrites
 > that block at the top of this file on every run. Keep it that way.
@@ -27,9 +28,26 @@ errors.ts              DuplicateExerciseNameError (no deps, breaks an import cyc
 repository.ts          ExerciseRepository interface + the active impl (server-only)
 repository.supabase.ts Supabase implementation + row mapping    (server-only)
 service.ts             business rules: validation, dedupe, stepper math (server-only)
-actions.ts             "use server" wrappers, each ending in refresh()
+actions.ts             "use server" wrappers, each starting with requireUser(), ending in refresh()
 components/            client components
 ```
+
+Auth lives in `src/features/auth/` (`session.ts` = `getUser`/`requireUser`, `actions.ts` =
+login + sign-out) plus `src/proxy.ts`. `src/lib/supabase.ts` builds a **per-request** client
+that acts as the signed-in user; `src/lib/supabase-config.ts` reads the env and is shared
+with the proxy.
+
+### Authorization model
+
+Three layers, innermost is the real boundary:
+
+1. **RLS** (`supabase/schema.sql`): every table has `user_id default auth.uid()` and
+   policies `user_id = (select auth.uid())`. The app queries as `authenticated` with the
+   user's JWT, so a missing filter in app code cannot leak rows. The repository never
+   filters by `user_id` — don't add it; don't reintroduce the service-role key in the
+   request path (it bypasses RLS).
+2. **`requireUser()`** at the top of every Server Action and every page that reads data.
+3. **`proxy.ts`** refreshes the session cookie and redirects GETs. Convenience only.
 
 `src/lib/settings.ts` owns increment sizes (weight 2.5, reps 1) and minimums.
 
@@ -71,8 +89,22 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
   so `next build` works on a machine with no credentials.
 - **`findByName` compares in JS, not with `ilike`**, which would treat `%` and `_` in
   an exercise name as wildcards. The unique index is the real guarantee.
-- **Server Actions are reachable by direct POST.** There is no auth today; if this
-  ever gains a second user, every action in `actions.ts` needs an authorization check.
+- **Server Actions are reachable by direct POST.** Every action must call
+  `requireUser()` first. The proxy deliberately skips non-GET requests: a redirect
+  response to an action POST confuses the client router, while `redirect()` from
+  inside the action is handled properly.
+- **Verify sessions with `getClaims()`**, never `getSession()` — the latter returns the
+  cookie contents unverified.
+- **`getSupabase()` calls `cookies()` before reading env.** That order marks routes
+  dynamic before the config check can throw, so `next build` still works with no
+  credentials. Reversing it breaks the build (it tries to prerender `/login`).
+- **Under RLS, another user's row looks like no row.** `update().single()` returns
+  PostgREST `PGRST116`, mapped to `ExerciseNotFoundError`.
+- **Supabase's built-in email is for testing only** (heavily rate-limited, team members
+  only). Open signup needs custom SMTP configured in the dashboard; the email template
+  must include `{{ .Token }}` (a code), not the magic link.
+- **SQL changes ship twice:** `schema.sql` is the fresh-project schema;
+  `supabase/migrations/NNN_*.sql` upgrades existing databases. Keep them in sync.
 - **The preview tool resolves the `.claude/launch.json` in the parent workspace
   directory**, not this repo's. A `gym-stats-tracker` entry was added there.
 
@@ -81,7 +113,10 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
 - Weight is per-exercise, reps are per-set. Per-set weight is deliberately deferred —
   `exercise_sets.weight` exists in the schema as the seam for it.
 - The card summary collapses uniform reps to `3 × 10` and varied reps to `12 / 10 / 8`.
-- Duplicate exercise names are rejected case-insensitively; the original sheet had
-  drifted into two "Leg Extension" rows with different weights.
+- Duplicate exercise names are rejected case-insensitively **per user**; the original
+  sheet had drifted into two "Leg Extension" rows with different weights.
+- Auth is an emailed one-time **code**, not a magic link: email apps open links in their
+  in-app browser, signing the user in there. Codes also work in the planned native app.
+  Passkeys and Google sign-in are planned follow-ups. Sign-out is `scope: "local"`.
 - Categories are a fixed `upper` / `lower` enum. User-defined categories are a known
   future feature — see README.

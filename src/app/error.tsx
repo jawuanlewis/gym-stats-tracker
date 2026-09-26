@@ -12,7 +12,7 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
         <h1 className="text-lg font-semibold">Could not load your stats</h1>
         <p className="mt-2 text-sm text-muted">
           This usually means the database connection is not configured. Check that SUPABASE_URL and
-          SUPABASE_SERVICE_ROLE_KEY are set.
+          SUPABASE_ANON_KEY are set, and that the database schema is up to date.
         </p>
         <button
           type="button"

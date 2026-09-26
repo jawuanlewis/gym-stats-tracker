@@ -16,6 +16,17 @@ export class DuplicateExerciseNameError extends Error {
 }
 
 /**
+ * The exercise does not exist, or belongs to another user — RLS makes those two
+ * cases look identical, which is the point.
+ */
+export class ExerciseNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Exercise ${id} not found`);
+    this.name = "ExerciseNotFoundError";
+  }
+}
+
+/**
  * Wraps a PostgrestError while keeping the parts that make it diagnosable.
  *
  * Postgres answers most failures with a SQLSTATE code and, often, a `hint`
