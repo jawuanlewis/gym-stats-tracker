@@ -4,12 +4,14 @@ import type { PostgrestError } from "@supabase/supabase-js";
 
 import { getSupabase } from "@/lib/supabase";
 
-import { DatabaseError, DuplicateExerciseNameError } from "./errors";
+import { DatabaseError, DuplicateExerciseNameError, ExerciseNotFoundError } from "./errors";
 import type { ExerciseRepository } from "./repository";
 import type { Category, Exercise } from "./types";
 
 const TABLE = "exercises";
 const UNIQUE_VIOLATION = "23505";
+/** PostgREST: `.single()` matched zero rows. */
+const NO_ROWS = "PGRST116";
 
 /** One entry of the `sets` jsonb column. */
 type SetRow = { reps: number; weight: number | null };
@@ -58,15 +60,26 @@ function rethrow(operation: string, error: PostgrestError, name?: string): never
   throw new DatabaseError(operation, error);
 }
 
+/**
+ * Every query runs as the signed-in user (see `getSupabase`), so RLS already
+ * limits it to their rows — no method filters by user_id, and none needs to.
+ * Inserts get user_id from the column default, `auth.uid()`.
+ */
 export const supabaseExerciseRepository: ExerciseRepository = {
   async list() {
-    const { data, error } = await getSupabase().from(TABLE).select("*");
+    const { data, error } = await (await getSupabase()).from(TABLE).select("*");
     if (error) rethrow("list exercises", error);
     return (data as ExerciseRow[]).map(toDomain);
   },
 
   async findById(id) {
-    const { data, error } = await getSupabase().from(TABLE).select("*").eq("id", id).maybeSingle();
+    const { data, error } = await (
+      await getSupabase()
+    )
+      .from(TABLE)
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
     if (error) rethrow("find exercise by id", error);
     return data ? toDomain(data as ExerciseRow) : null;
   },
@@ -74,10 +87,11 @@ export const supabaseExerciseRepository: ExerciseRepository = {
   /**
    * Compared in JS rather than with `ilike`, which would treat `%` and `_` in an
    * exercise name as wildcards. The list is small enough that fetching it is
-   * cheaper than the escaping bugs, and the unique index is the real guarantee.
+   * cheaper than the escaping bugs, and the per-user unique index is the real
+   * guarantee. "The list" is only this user's rows, courtesy of RLS.
    */
   async findByName(name) {
-    const { data, error } = await getSupabase().from(TABLE).select("*");
+    const { data, error } = await (await getSupabase()).from(TABLE).select("*");
     if (error) rethrow("find exercise by name", error);
 
     const target = name.trim().toLowerCase();
@@ -86,7 +100,9 @@ export const supabaseExerciseRepository: ExerciseRepository = {
   },
 
   async create(input) {
-    const { data, error } = await getSupabase()
+    const { data, error } = await (
+      await getSupabase()
+    )
       .from(TABLE)
       .insert({
         name: input.name,
@@ -107,18 +123,23 @@ export const supabaseExerciseRepository: ExerciseRepository = {
     if (patch.weight !== undefined) payload.weight = patch.weight;
     if (patch.sets !== undefined) payload.sets = toSetRows(patch.sets);
 
-    const { data, error } = await getSupabase()
+    const { data, error } = await (
+      await getSupabase()
+    )
       .from(TABLE)
       .update(payload)
       .eq("id", id)
       .select()
       .single();
+    // Another user's row is invisible under RLS, so it updates nothing rather
+    // than failing — indistinguishable from a row that does not exist.
+    if (error?.code === NO_ROWS) throw new ExerciseNotFoundError(id);
     if (error) rethrow("update exercise", error, patch.name);
     return toDomain(data as ExerciseRow);
   },
 
   async remove(id) {
-    const { error } = await getSupabase().from(TABLE).delete().eq("id", id);
+    const { error } = await (await getSupabase()).from(TABLE).delete().eq("id", id);
     if (error) rethrow("delete exercise", error);
   },
 };

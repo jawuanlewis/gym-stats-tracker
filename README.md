@@ -21,8 +21,6 @@ pnpm install
 pnpm dev
 ```
 
-The app seeds itself on first run with the exercises from the original sheet.
-
 ```bash
 pnpm format        # format everything
 pnpm format:check  # verify without writing — for CI
@@ -40,13 +38,34 @@ another implementation and reassigning one export.
 set weight means "inherit the exercise weight"; nothing writes a non-null value yet,
 but per-set weight (drop sets) needs no migration because the shape already allows it.
 
-Setup:
+Setup (fresh project):
 
 1. Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL editor.
 2. Copy `.env.example` to `.env.local` and fill in the project URL and the
-   **service_role** key from Project Settings → API.
+   **anon** (or "publishable") key from Project Settings → API.
+3. Configure auth in the dashboard — see [Auth](#auth).
 
-The app starts empty — add your exercises through the UI.
+Upgrading the original single-user database: follow the header of
+[`supabase/migrations/002_per_user.sql`](supabase/migrations/002_per_user.sql), which
+assigns the existing exercises to your account.
+
+## Auth
+
+Passwordless: enter an email, receive a one-time code, type it in. Signing up and
+signing in are the same flow, and signup is open. Sessions are long-lived, so this
+happens roughly once per device.
+
+Each user's data is isolated by Postgres **row-level security**: the app queries as
+the signed-in user, never with the service-role key, so the database itself refuses
+to return another user's rows. Every Server Action also checks for a session first.
+
+Dashboard settings (Authentication):
+
+- **Email template** ("Magic Link"): replace the link with the code, e.g.
+  `Your Gym Stats code is {{ .Token }}`.
+- **SMTP**: Supabase's built-in sender is for testing — rate-limited and limited to
+  project team members. Configure a custom SMTP provider before anyone else signs up.
+- **Sessions**: leave refresh tokens without a time-box so people stay signed in.
 
 ## Architecture notes
 
@@ -74,4 +93,5 @@ Deliberately out of scope for v1, but the code is shaped to accommodate them:
 - **Per-set weight** — drop sets, where each set carries its own weight instead of
   inheriting the exercise's
 - **Progression history** — charts over time, backed by the `exercise_events` table
-- **Auth** — the app is currently single-user with no login
+- **Passkeys** — Face ID / Touch ID sign-in, with the email code as recovery
+- **Google sign-in** — one-tap sign-in alongside the email code
