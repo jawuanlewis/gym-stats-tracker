@@ -2,7 +2,7 @@ import "server-only";
 
 import { getIncrements, MINIMUMS } from "@/lib/settings";
 
-import { DuplicateExerciseNameError } from "./errors";
+import { DuplicateExerciseNameError, ExerciseNotFoundError } from "./errors";
 import { roundValue } from "./format";
 import { exerciseRepository } from "./repository";
 import {
@@ -81,7 +81,7 @@ export async function renameExercise(id: string, name: string): Promise<ServiceR
 
 async function requireExercise(id: string): Promise<Exercise> {
   const exercise = await exerciseRepository.findById(id);
-  if (!exercise) throw new Error(`Exercise ${id} not found`);
+  if (!exercise) throw new ExerciseNotFoundError(id);
   return exercise;
 }
 
