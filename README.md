@@ -61,7 +61,8 @@ to return another user's rows. Every Server Action also checks for a session fir
 
 Dashboard settings (Authentication):
 
-- **Email template** ("Magic Link"): replace the link with the code, e.g.
+- **Email templates** — both **Magic Link** (returning users) and **Confirm signup**
+  (first sign-in for a new email): replace the link with the code, e.g.
   `Your Gym Stats code is {{ .Token }}`.
 - **SMTP**: Supabase's built-in sender is for testing — rate-limited and limited to
   project team members. Configure a custom SMTP provider before anyone else signs up.
