@@ -101,8 +101,9 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
 - **Under RLS, another user's row looks like no row.** `update().single()` returns
   PostgREST `PGRST116`, mapped to `ExerciseNotFoundError`.
 - **Supabase's built-in email is for testing only** (heavily rate-limited, team members
-  only). Open signup needs custom SMTP configured in the dashboard; the email template
-  must include `{{ .Token }}` (a code), not the magic link.
+  only). Open signup needs custom SMTP configured in the dashboard. Both the **Magic
+  Link** and **Confirm signup** templates must send `{{ .Token }}` — a new email gets
+  Confirm signup, not Magic Link.
 - **SQL changes ship twice:** `schema.sql` is the fresh-project schema;
   `supabase/migrations/NNN_*.sql` upgrades existing databases. Keep them in sync.
 - **The preview tool resolves the `.claude/launch.json` in the parent workspace
