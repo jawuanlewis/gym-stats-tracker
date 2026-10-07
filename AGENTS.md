@@ -121,3 +121,6 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
   Passkeys and Google sign-in are planned follow-ups. Sign-out is `scope: "local"`.
 - Categories are a fixed `upper` / `lower` enum. User-defined categories are a known
   future feature — see README.
+- Collapsed category sections are remembered per device in the `collapsed-categories`
+  cookie (`collapsed-categories.ts`), not localStorage, so the server renders them
+  collapsed with no flash. Keyed by plain string id, ready for custom categories.

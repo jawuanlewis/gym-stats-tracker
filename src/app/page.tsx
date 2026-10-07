@@ -1,6 +1,13 @@
+import { cookies } from "next/headers";
+
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { requireUser } from "@/features/auth/session";
+import {
+  COLLAPSED_CATEGORIES_COOKIE,
+  parseCollapsedCategories,
+} from "@/features/exercises/collapsed-categories";
 import { AddExerciseForm } from "@/features/exercises/components/add-exercise-form";
+import { CategorySection } from "@/features/exercises/components/category-section";
 import { ExerciseCard } from "@/features/exercises/components/exercise-card";
 import { listExercises } from "@/features/exercises/service";
 import { CATEGORIES, CATEGORY_LABELS } from "@/features/exercises/types";
@@ -13,7 +20,12 @@ export default async function HomePage() {
   // Before any data read: RLS would return an empty list to a signed-out
   // visitor, which looks like a working page with nothing in it.
   const user = await requireUser();
-  const [exercises, increments] = await Promise.all([listExercises(), getIncrements()]);
+  const [exercises, increments, cookieStore] = await Promise.all([
+    listExercises(),
+    getIncrements(),
+    cookies(),
+  ]);
+  const collapsed = parseCollapsedCategories(cookieStore.get(COLLAPSED_CATEGORIES_COOKIE)?.value);
 
   return (
     <main className="mx-auto w-full max-w-md flex-1 px-4 pb-16 pt-8">
@@ -40,16 +52,17 @@ export default async function HomePage() {
           if (inCategory.length === 0) return null;
 
           return (
-            <section key={category}>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted">
-                {CATEGORY_LABELS[category]}
-              </h2>
-              <ul className="space-y-3">
-                {inCategory.map((exercise) => (
-                  <ExerciseCard key={exercise.id} exercise={exercise} increments={increments} />
-                ))}
-              </ul>
-            </section>
+            <CategorySection
+              key={category}
+              id={category}
+              label={CATEGORY_LABELS[category]}
+              count={inCategory.length}
+              defaultCollapsed={collapsed.has(category)}
+            >
+              {inCategory.map((exercise) => (
+                <ExerciseCard key={exercise.id} exercise={exercise} increments={increments} />
+              ))}
+            </CategorySection>
           );
         })}
 
