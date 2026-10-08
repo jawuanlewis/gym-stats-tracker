@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { LAYOUT_TRANSITION } from "@/lib/motion";
+
 import { persistCategoryCollapsed } from "../collapsed-categories";
 import { Collapse } from "./collapse";
 
@@ -54,7 +56,7 @@ export function CategorySection({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`h-4 w-4 transition-transform ${collapsed ? "-rotate-90" : ""}`}
+              className={`h-4 w-4 transition-transform ${LAYOUT_TRANSITION} ${collapsed ? "-rotate-90" : ""}`}
             >
               <path d="M4 6l4 4 4-4" />
             </svg>

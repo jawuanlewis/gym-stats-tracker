@@ -116,11 +116,8 @@ export function ExerciseCard({
           />
         </div>
 
-        {expanded ? (
-          <div
-            id={panelId}
-            className="space-y-4 border-t border-border bg-surface-raised/40 px-4 py-4"
-          >
+        <Collapse id={panelId} open={expanded}>
+          <div className="space-y-4 border-t border-border bg-surface-raised/40 px-4 py-4">
             <ul className="space-y-2">
               {optimistic.sets.map((reps, index) => (
                 // Sets are positional and have no stable id; the index is the identity.
@@ -205,7 +202,7 @@ export function ExerciseCard({
               )}
             </div>
           </div>
-        ) : null}
+        </Collapse>
       </Collapse>
     </div>
   );

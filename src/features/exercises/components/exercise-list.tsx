@@ -20,6 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useId, useOptimistic, useTransition } from "react";
 
+import { LAYOUT_TRANSITION } from "@/lib/motion";
 import type { Increments } from "@/lib/settings";
 
 import { reorderExercisesAction } from "../actions";
@@ -123,7 +124,7 @@ function SortableExercise({
       {/* Always mounted so the card can ease narrower and wider; inert while folded away. */}
       <div
         inert={!editing}
-        className={`shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-out motion-reduce:transition-none ${
+        className={`shrink-0 overflow-hidden transition-[width,opacity] ${LAYOUT_TRANSITION} ${
           editing ? "w-12 opacity-100" : "w-0 opacity-0"
         }`}
       >

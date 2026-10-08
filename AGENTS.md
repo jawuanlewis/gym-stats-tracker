@@ -57,6 +57,9 @@ Three layers, innermost is the real boundary:
   async today specifically so it can become a DB read when settings ship.
 - **Never hardcode a color.** Every color is a CSS variable in `globals.css` under
   `:root, [data-theme="dark"]`. Light mode is a future second block.
+- **Never hand-write a layout transition.** Anything changing size or position uses
+  `LAYOUT_TRANSITION` from `src/lib/motion.ts`; height uses `<Collapse>`. Bare
+  `transition-colors` is for tap feedback only.
 - `types.ts` and `format.ts` must stay importable from client components — do not
   add server imports to them. `repository.ts` and `service.ts` carry `import
 "server-only"` to enforce the other direction.

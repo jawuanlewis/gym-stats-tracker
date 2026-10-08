@@ -1,3 +1,5 @@
+import { LAYOUT_TRANSITION } from "@/lib/motion";
+
 /**
  * Eases its children between their natural height and zero.
  *
@@ -19,7 +21,7 @@ export function Collapse({
     <div
       id={id}
       inert={!open}
-      className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
+      className={`grid transition-[grid-template-rows,opacity] ${LAYOUT_TRANSITION} ${
         open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
       }`}
     >
