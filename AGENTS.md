@@ -124,3 +124,8 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
 - Collapsed category sections are remembered per device in the `collapsed-categories`
   cookie (`collapsed-categories.ts`), not localStorage, so the server renders them
   collapsed with no flash. Keyed by plain string id, ready for custom categories.
+- Exercise order is `exercises.sort_order`, compared only within a category (ties fall
+  back to `created_at`). Drag-to-reorder sends one category's full id list to the
+  `reorder_exercises` RPC, which renumbers it atomically. Each category is its own
+  dnd-kit context, so a drag cannot change category. `DndContext` needs a stable `id`
+  or its generated aria ids mismatch on hydration.

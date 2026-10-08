@@ -23,6 +23,8 @@ export type Exercise = {
   weight: number;
   /** Reps per set, in order. Length is the number of sets. */
   sets: number[];
+  /** Position within its category, lowest first. Ties fall back to `createdAt`. */
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -34,7 +36,7 @@ export type NewExercise = {
   sets: number[];
 };
 
-export type ExercisePatch = Partial<Omit<Exercise, "id" | "createdAt" | "updatedAt">>;
+export type ExercisePatch = Partial<Omit<Exercise, "id" | "sortOrder" | "createdAt" | "updatedAt">>;
 
 /** Which numeric field a stepper is adjusting. Maps onto the increment settings. */
 export type AdjustableField = "weight" | "reps";

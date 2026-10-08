@@ -8,7 +8,8 @@ import {
 } from "@/features/exercises/collapsed-categories";
 import { AddExerciseForm } from "@/features/exercises/components/add-exercise-form";
 import { CategorySection } from "@/features/exercises/components/category-section";
-import { ExerciseCard } from "@/features/exercises/components/exercise-card";
+import { EditModeProvider, EditModeToggle } from "@/features/exercises/components/edit-mode";
+import { ExerciseList } from "@/features/exercises/components/exercise-list";
 import { listExercises } from "@/features/exercises/service";
 import { CATEGORIES, CATEGORY_LABELS } from "@/features/exercises/types";
 import { getIncrements } from "@/lib/settings";
@@ -28,46 +29,49 @@ export default async function HomePage() {
   const collapsed = parseCollapsedCategories(cookieStore.get(COLLAPSED_CATEGORIES_COOKIE)?.value);
 
   return (
-    <main className="mx-auto w-full max-w-md flex-1 px-4 pb-16 pt-8">
-      <header className="mb-6 flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">Gym Stats</h1>
-          <p className="mt-1 text-sm text-muted">
-            {exercises.length} {exercises.length === 1 ? "exercise" : "exercises"} tracked
-          </p>
-          {user.email ? <p className="mt-1 truncate text-xs text-muted">{user.email}</p> : null}
+    <EditModeProvider>
+      <main className="mx-auto w-full max-w-md flex-1 px-4 pb-16 pt-8">
+        <header className="mb-6 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight">Gym Stats</h1>
+            <p className="mt-1 text-sm text-muted">
+              {exercises.length} {exercises.length === 1 ? "exercise" : "exercises"} tracked
+            </p>
+            {user.email ? <p className="mt-1 truncate text-xs text-muted">{user.email}</p> : null}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {exercises.length > 1 ? <EditModeToggle /> : null}
+            <SignOutButton />
+          </div>
+        </header>
+
+        <div className="space-y-8">
+          {exercises.length === 0 ? (
+            <p className="rounded-2xl border border-border bg-surface px-4 py-8 text-center text-sm text-muted">
+              Nothing tracked yet. Add your first exercise below.
+            </p>
+          ) : null}
+
+          {CATEGORIES.map((category) => {
+            const inCategory = exercises.filter((exercise) => exercise.category === category);
+            if (inCategory.length === 0) return null;
+
+            return (
+              <CategorySection
+                key={category}
+                id={category}
+                label={CATEGORY_LABELS[category]}
+                count={inCategory.length}
+                defaultCollapsed={collapsed.has(category)}
+              >
+                <ExerciseList exercises={inCategory} increments={increments} />
+              </CategorySection>
+            );
+          })}
+
+          <AddExerciseForm />
         </div>
-        <SignOutButton />
-      </header>
-
-      <div className="space-y-8">
-        {exercises.length === 0 ? (
-          <p className="rounded-2xl border border-border bg-surface px-4 py-8 text-center text-sm text-muted">
-            Nothing tracked yet. Add your first exercise below.
-          </p>
-        ) : null}
-
-        {CATEGORIES.map((category) => {
-          const inCategory = exercises.filter((exercise) => exercise.category === category);
-          if (inCategory.length === 0) return null;
-
-          return (
-            <CategorySection
-              key={category}
-              id={category}
-              label={CATEGORY_LABELS[category]}
-              count={inCategory.length}
-              defaultCollapsed={collapsed.has(category)}
-            >
-              {inCategory.map((exercise) => (
-                <ExerciseCard key={exercise.id} exercise={exercise} increments={increments} />
-              ))}
-            </CategorySection>
-          );
-        })}
-
-        <AddExerciseForm />
-      </div>
-    </main>
+      </main>
+    </EditModeProvider>
   );
 }

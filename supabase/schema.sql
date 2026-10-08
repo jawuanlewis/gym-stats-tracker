@@ -17,6 +17,9 @@ create table exercises (
   -- non-null value yet; this is the seam for per-set weight (drop sets),
   -- which needs no migration because the shape already allows it.
   sets jsonb not null default '[]'::jsonb,
+  -- Position within the category, lowest first; ties fall back to created_at.
+  -- Written by reorder_exercises() below and on insert by the app.
+  sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint exercises_sets_is_array check (jsonb_typeof(sets) = 'array')
@@ -27,6 +30,18 @@ create table exercises (
 -- standing between a user and duplicate rows. Leading with user_id also makes
 -- this the index behind every RLS-filtered read.
 create unique index exercises_user_name_unique on exercises (user_id, lower(name));
+
+-- Rewrites the order of the given exercises in one atomic statement, so a
+-- dropped connection cannot leave a half-reordered list. `security invoker`
+-- keeps RLS in force: ids belonging to another user simply match no rows.
+create function reorder_exercises (ordered_ids uuid[]) returns void language sql security invoker
+set
+  search_path = '' as $$
+  update public.exercises as e
+  set sort_order = o.ordinality
+  from unnest(ordered_ids) with ordinality as o (id, ordinality)
+  where e.id = o.id;
+$$;
 
 -- Append-only history. Nothing reads this yet — it exists so that when
 -- progression charts land, there is already data behind them.
@@ -138,6 +153,16 @@ grant
 select
 ,
   insert on table public.exercise_events to authenticated;
+
+-- Functions are executable by everyone by default, unlike tables.
+revoke
+execute on function reorder_exercises (uuid[])
+from
+  public,
+  anon;
+
+grant
+execute on function reorder_exercises (uuid[]) to authenticated;
 
 revoke all on table public.exercises
 from

@@ -84,7 +84,7 @@ export function ExerciseCard({
   const panelId = `exercise-panel-${exercise.id}`;
 
   return (
-    <li className="overflow-hidden rounded-2xl border border-border bg-surface">
+    <div className="overflow-hidden rounded-2xl border border-border bg-surface">
       <div className="p-4">
         <button
           type="button"
@@ -201,6 +201,6 @@ export function ExerciseCard({
           </div>
         </div>
       ) : null}
-    </li>
+    </div>
   );
 }

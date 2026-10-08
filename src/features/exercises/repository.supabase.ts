@@ -23,6 +23,7 @@ type ExerciseRow = {
   /** See `toDomain` for why this is widened. */
   weight: string | number;
   sets: SetRow[] | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 };
@@ -43,6 +44,7 @@ function toDomain(row: ExerciseRow): Exercise {
     category: row.category,
     weight: Number(row.weight),
     sets: (row.sets ?? []).map((set) => set.reps),
+    sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -99,7 +101,7 @@ export const supabaseExerciseRepository: ExerciseRepository = {
     return match ? toDomain(match) : null;
   },
 
-  async create(input) {
+  async create(input, sortOrder) {
     const { data, error } = await (
       await getSupabase()
     )
@@ -109,6 +111,7 @@ export const supabaseExerciseRepository: ExerciseRepository = {
         category: input.category,
         weight: input.weight,
         sets: toSetRows(input.sets),
+        sort_order: sortOrder,
       })
       .select()
       .single();
@@ -136,6 +139,13 @@ export const supabaseExerciseRepository: ExerciseRepository = {
     if (error?.code === NO_ROWS) throw new ExerciseNotFoundError(id);
     if (error) rethrow("update exercise", error, patch.name);
     return toDomain(data as ExerciseRow);
+  },
+
+  async reorder(orderedIds) {
+    const { error } = await (
+      await getSupabase()
+    ).rpc("reorder_exercises", { ordered_ids: orderedIds });
+    if (error) rethrow("reorder exercises", error);
   },
 
   async remove(id) {
