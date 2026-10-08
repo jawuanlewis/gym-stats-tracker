@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
+import { LAYOUT_TRANSITION } from "@/lib/motion";
+
 import { persistCategoryCollapsed } from "../collapsed-categories";
+import { Collapse } from "./collapse";
 
 /**
  * A category heading that folds its exercises away. The list is hidden rather
@@ -53,30 +56,16 @@ export function CategorySection({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`h-4 w-4 transition-transform ${collapsed ? "-rotate-90" : ""}`}
+              className={`h-4 w-4 transition-transform ${LAYOUT_TRANSITION} ${collapsed ? "-rotate-90" : ""}`}
             >
               <path d="M4 6l4 4 4-4" />
             </svg>
           </span>
         </button>
       </h2>
-      {/*
-        Animating a grid row between 0fr and 1fr is the way to transition to the
-        content's natural height without measuring it. `inert` stands in for
-        `hidden`, which cannot animate: it keeps the folded cards out of the tab
-        order and the accessibility tree.
-      */}
-      <div
-        id={listId}
-        inert={collapsed}
-        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
-          collapsed ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
-        }`}
-      >
-        <div className="min-h-0 overflow-hidden">
-          <ul className="mt-1 space-y-3">{children}</ul>
-        </div>
-      </div>
+      <Collapse id={listId} open={!collapsed}>
+        <ul className="mt-1 space-y-3">{children}</ul>
+      </Collapse>
     </section>
   );
 }

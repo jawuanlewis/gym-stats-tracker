@@ -14,8 +14,10 @@ export interface ExerciseRepository {
   list(): Promise<Exercise[]>;
   findById(id: string): Promise<Exercise | null>;
   findByName(name: string): Promise<Exercise | null>;
-  create(input: NewExercise): Promise<Exercise>;
+  create(input: NewExercise, sortOrder: number): Promise<Exercise>;
   update(id: string, patch: ExercisePatch): Promise<Exercise>;
+  /** Renumbers the given exercises to match the order of `orderedIds`. */
+  reorder(orderedIds: string[]): Promise<void>;
   remove(id: string): Promise<void>;
 }
 

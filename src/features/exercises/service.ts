@@ -24,7 +24,9 @@ export async function listExercises(): Promise<Exercise[]> {
   const exercises = await exerciseRepository.list();
   return exercises.sort(
     (a, b) =>
-      categoryRank(a.category) - categoryRank(b.category) || a.createdAt.localeCompare(b.createdAt),
+      categoryRank(a.category) - categoryRank(b.category) ||
+      a.sortOrder - b.sortOrder ||
+      a.createdAt.localeCompare(b.createdAt),
   );
 }
 
@@ -41,10 +43,19 @@ export async function createExercise(input: NewExercise): Promise<ServiceResult<
   }
   if (input.sets.length === 0) return { ok: false, error: "Add at least one set." };
 
+  // New exercises land at the bottom of their category.
+  const siblings = (await exerciseRepository.list()).filter(
+    (exercise) => exercise.category === input.category,
+  );
+  const sortOrder = Math.max(0, ...siblings.map((exercise) => exercise.sortOrder)) + 1;
+
   try {
     return {
       ok: true,
-      data: await exerciseRepository.create({ ...input, name, weight: roundValue(input.weight) }),
+      data: await exerciseRepository.create(
+        { ...input, name, weight: roundValue(input.weight) },
+        sortOrder,
+      ),
     };
   } catch (error) {
     return asDuplicateResult(error, name);
@@ -125,6 +136,21 @@ export async function removeSet(id: string, setIndex: number): Promise<Exercise>
   return exerciseRepository.update(id, {
     sets: exercise.sets.filter((_, index) => index !== setIndex),
   });
+}
+
+/** Generous: only here so a hand-crafted POST cannot send an unbounded array. */
+const MAX_REORDER_IDS = 500;
+
+/**
+ * Order only matters among exercises that share a category, so the ids are
+ * expected to be one category's full list — but nothing breaks if they are not.
+ */
+export async function reorderExercises(orderedIds: string[]): Promise<void> {
+  if (orderedIds.length > MAX_REORDER_IDS || new Set(orderedIds).size !== orderedIds.length) {
+    throw new Error("Invalid exercise order");
+  }
+  if (orderedIds.length === 0) return;
+  await exerciseRepository.reorder(orderedIds);
 }
 
 export async function deleteExercise(id: string): Promise<void> {

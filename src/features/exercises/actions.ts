@@ -12,6 +12,7 @@ import {
   deleteExercise,
   removeSet,
   renameExercise,
+  reorderExercises,
 } from "./service";
 import { CATEGORIES, type Category, type Direction } from "./types";
 
@@ -95,6 +96,15 @@ export async function addSetAction(id: string): Promise<void> {
 export async function removeSetAction(id: string, setIndex: number): Promise<void> {
   await requireUser();
   await removeSet(id, setIndex);
+  refresh();
+}
+
+export async function reorderExercisesAction(orderedIds: string[]): Promise<void> {
+  await requireUser();
+  if (!Array.isArray(orderedIds) || !orderedIds.every((id) => typeof id === "string")) {
+    throw new Error("Invalid exercise order");
+  }
+  await reorderExercises(orderedIds);
   refresh();
 }
 

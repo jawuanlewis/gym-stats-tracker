@@ -57,6 +57,9 @@ Three layers, innermost is the real boundary:
   async today specifically so it can become a DB read when settings ship.
 - **Never hardcode a color.** Every color is a CSS variable in `globals.css` under
   `:root, [data-theme="dark"]`. Light mode is a future second block.
+- **Never hand-write a layout transition.** Anything changing size or position uses
+  `LAYOUT_TRANSITION` from `src/lib/motion.ts`; height uses `<Collapse>`. Bare
+  `transition-colors` is for tap feedback only.
 - `types.ts` and `format.ts` must stay importable from client components — do not
   add server imports to them. `repository.ts` and `service.ts` carry `import
 "server-only"` to enforce the other direction.
@@ -124,3 +127,8 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
 - Collapsed category sections are remembered per device in the `collapsed-categories`
   cookie (`collapsed-categories.ts`), not localStorage, so the server renders them
   collapsed with no flash. Keyed by plain string id, ready for custom categories.
+- Exercise order is `exercises.sort_order`, compared only within a category (ties fall
+  back to `created_at`). Drag-to-reorder sends one category's full id list to the
+  `reorder_exercises` RPC, which renumbers it atomically. Each category is its own
+  dnd-kit context, so a drag cannot change category. `DndContext` needs a stable `id`
+  or its generated aria ids mismatch on hydration.
