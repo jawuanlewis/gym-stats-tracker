@@ -57,9 +57,12 @@ Three layers, innermost is the real boundary:
   async today specifically so it can become a DB read when settings ship.
 - **Never hardcode a color.** Every color is a CSS variable in `globals.css` under
   `:root, [data-theme="dark"]`. Light mode is a future second block.
-- **Never hand-write a layout transition.** Anything changing size or position uses
-  `LAYOUT_TRANSITION` from `src/lib/motion.ts`; height uses `<Collapse>`. Bare
-  `transition-colors` is for tap feedback only.
+- **Nothing snaps, and no transition is hand-written.** Use `Collapse` / `Fade` / `Stack`
+  from `src/components/motion.tsx`, the `animate-enter` class for keyed remounts, or
+  `LAYOUT_TRANSITION` from `src/lib/motion.ts`; every `<dialog>` fades via `globals.css`.
+  Timing is the `--motion-*` variables there. Bare `transition-colors` is tap feedback only.
+- Content inside `Collapse`/`Fade` stays mounted while hidden, so it cannot use
+  `autoFocus` — focus it in an effect when it opens (see `rename-form.tsx`).
 - `types.ts` and `format.ts` must stay importable from client components — do not
   add server imports to them. `repository.ts` and `service.ts` carry `import
 "server-only"` to enforce the other direction.

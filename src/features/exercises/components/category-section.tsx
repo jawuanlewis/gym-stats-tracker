@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 
+import { Collapse } from "@/components/motion";
 import { LAYOUT_TRANSITION } from "@/lib/motion";
 
 import { persistCategoryCollapsed } from "../collapsed-categories";
-import { Collapse } from "./collapse";
 
 /**
  * A category heading that folds its exercises away. The list is hidden rather
