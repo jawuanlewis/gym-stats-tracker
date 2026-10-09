@@ -2,6 +2,7 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 
+import { Collapse, Fade, Stack } from "@/components/motion";
 import { MINIMUMS, type Increments } from "@/lib/settings";
 
 import {
@@ -13,7 +14,6 @@ import {
 } from "../actions";
 import { formatSets, formatWeight, roundValue } from "../format";
 import { MAX_SETS, type Direction, type Exercise } from "../types";
-import { Collapse } from "./collapse";
 import { useEditMode } from "./edit-mode";
 import { RenameForm } from "./rename-form";
 import { Stepper } from "./stepper";
@@ -156,50 +156,62 @@ export function ExerciseCard({
             </button>
 
             <div className="border-t border-border pt-3">
-              {renaming ? (
-                <RenameForm
-                  id={exercise.id}
-                  name={optimistic.name}
-                  onDone={() => setRenaming(false)}
-                />
-              ) : (
-                <div className="flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setRenaming(true)}
-                    className="text-sm text-accent underline-offset-4 hover:underline"
-                  >
-                    Rename
-                  </button>
-
-                  {confirmingDelete ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={confirmDelete}
-                        className="rounded-lg bg-danger px-3 py-2 text-sm font-medium text-accent-foreground"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmingDelete(false)}
-                        className="text-sm text-muted"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
+              {/*
+                Everything the footer can show is stacked and crossfaded, so it is
+                always as tall as the rename form and the card never changes size.
+              */}
+              <Stack className="items-center">
+                <Fade show={!renaming}>
+                  <div className="flex items-center justify-between gap-3">
                     <button
                       type="button"
-                      onClick={() => setConfirmingDelete(true)}
-                      className="text-sm text-danger underline-offset-4 hover:underline"
+                      onClick={() => setRenaming(true)}
+                      className="text-sm text-accent underline-offset-4 hover:underline"
                     >
-                      Delete
+                      Rename
                     </button>
-                  )}
-                </div>
-              )}
+
+                    <Stack className="items-center justify-items-end">
+                      <Fade show={!confirmingDelete}>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingDelete(true)}
+                          className="text-sm text-danger underline-offset-4 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </Fade>
+                      <Fade show={confirmingDelete}>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={confirmDelete}
+                            className="rounded-lg bg-danger px-3 py-2 text-sm font-medium text-accent-foreground"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmingDelete(false)}
+                            className="text-sm text-muted"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </Fade>
+                    </Stack>
+                  </div>
+                </Fade>
+
+                <Fade show={renaming}>
+                  <RenameForm
+                    id={exercise.id}
+                    name={optimistic.name}
+                    open={renaming}
+                    onDone={() => setRenaming(false)}
+                  />
+                </Fade>
+              </Stack>
             </div>
           </div>
         </Collapse>

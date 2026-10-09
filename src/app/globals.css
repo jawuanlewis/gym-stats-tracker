@@ -19,6 +19,16 @@
   --danger: #ff6b81;
 }
 
+/**
+ * The one clock for anything that appears, disappears, or changes size or
+ * position. Read by `LAYOUT_TRANSITION` in src/lib/motion.ts and by the dialog
+ * rules below, so the two cannot drift apart.
+ */
+:root {
+  --motion-duration: 300ms;
+  --motion-ease: cubic-bezier(0, 0, 0.2, 1);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -32,6 +42,15 @@
   --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* `animate-enter`: fades in content that replaced something by remounting. */
+  --animate-enter: enter var(--motion-duration) var(--motion-ease);
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
 body {
@@ -45,4 +64,39 @@ body {
 /* The one thing that must not happen at the gym: a stray double-tap zooming the page. */
 button {
   touch-action: manipulation;
+}
+
+/**
+ * Every modal <dialog> fades in and out with its backdrop — no per-dialog
+ * classes needed. `display` and `overlay` are transitioned discretely so the
+ * dialog stays rendered, and in the top layer, until the fade-out finishes;
+ * @starting-style supplies the "from" state a freshly opened dialog lacks.
+ */
+dialog,
+dialog::backdrop {
+  opacity: 0;
+  transition:
+    opacity var(--motion-duration) var(--motion-ease),
+    display var(--motion-duration) allow-discrete,
+    overlay var(--motion-duration) allow-discrete;
+}
+
+dialog[open],
+dialog[open]::backdrop {
+  opacity: 1;
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog,
+  dialog::backdrop {
+    transition: none;
+  }
+
+  .animate-enter {
+    animation: none;
+  }
 }
