@@ -41,7 +41,7 @@ export default async function HomePage() {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {exercises.length > 1 ? <EditModeToggle /> : null}
-            <SignOutButton />
+            <SignOutButton email={user.email} />
           </div>
         </header>
 
