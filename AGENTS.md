@@ -63,6 +63,8 @@ Three layers, innermost is the real boundary:
   Timing is the `--motion-*` variables there. Bare `transition-colors` is tap feedback only.
 - Content inside `Collapse`/`Fade` stays mounted while hidden, so it cannot use
   `autoFocus` — focus it in an effect when it opens (see `rename-form.tsx`).
+  For the same reason a form's last error outlives a cancel: show errors through
+  `useDismissibleError` + `FormError` (`src/components/form-error.tsx`), never `state.error` directly.
 - `types.ts` and `format.ts` must stay importable from client components — do not
   add server imports to them. `repository.ts` and `service.ts` carry `import
 "server-only"` to enforce the other direction.

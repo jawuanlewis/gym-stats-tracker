@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 
+import { FormError, useDismissibleError } from "@/components/form-error";
 import { Collapse, Fade, Stack } from "@/components/motion";
 
 import { createExerciseAction, type CreateState } from "../actions";
@@ -19,6 +20,7 @@ export function AddExerciseForm() {
     createExerciseAction,
     {},
   );
+  const showError = useDismissibleError(state, open);
   const submitted = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -96,13 +98,14 @@ export function AddExerciseForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <NumberField name="weight" label="Weight" defaultValue={45} step={2.5} min={0} />
-            <NumberField name="setCount" label="Sets" defaultValue={3} step={1} min={1} />
-            <NumberField name="reps" label="Reps" defaultValue={10} step={1} min={1} />
+          <div>
+            <div className="grid grid-cols-3 gap-2">
+              <NumberField name="weight" label="Weight" defaultValue={45} step={2.5} min={0} />
+              <NumberField name="setCount" label="Sets" defaultValue={3} step={1} min={1} />
+              <NumberField name="reps" label="Reps" defaultValue={10} step={1} min={1} />
+            </div>
+            <FormError show={showError} message={state.error} className="pt-4" />
           </div>
-
-          {state.error ? <p className="text-sm text-danger">{state.error}</p> : null}
 
           <div className="flex gap-2">
             <button

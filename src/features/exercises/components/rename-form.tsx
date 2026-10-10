@@ -2,6 +2,8 @@
 
 import { useActionState, useEffect, useRef } from "react";
 
+import { FormError, useDismissibleError } from "@/components/form-error";
+
 import { renameExerciseAction, type RenameState } from "../actions";
 
 /**
@@ -19,6 +21,7 @@ export function RenameForm({
     renameExerciseAction.bind(null, id),
     {},
   );
+  const showError = useDismissibleError(state, open);
   const succeeded = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,7 +42,7 @@ export function RenameForm({
   }, [pending, state, onDone]);
 
   return (
-    <form action={formAction} className="space-y-2">
+    <form action={formAction}>
       <div className="flex gap-2">
         <input
           name="name"
@@ -64,7 +67,7 @@ export function RenameForm({
           Cancel
         </button>
       </div>
-      {state.error ? <p className="text-sm text-danger">{state.error}</p> : null}
+      <FormError show={showError} message={state.error} className="pt-2" />
     </form>
   );
 }
