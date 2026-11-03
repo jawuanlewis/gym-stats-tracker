@@ -80,6 +80,12 @@ to match Supabase convention) — without that plugin Prettier silently skips `.
 `public/*.svg` is in `.prettierignore`: Prettier has no SVG parser without
 `@prettier/plugin-xml`, and those are unused Next.js scaffold assets anyway.
 
+ESLint is on v10, but `eslint-config-next` still bundles `eslint-plugin-react` / `-import` /
+`-jsx-a11y`, which call context APIs v10 removed (`context.getFilename()` crashes lint).
+`eslint.config.mjs` wraps the Next configs in `fixupConfigRules` from `@eslint/compat` to
+shim them; the resulting `pnpm peers check` warnings are expected. Remove the wrapper once
+those plugins declare ESLint 10 support.
+
 ## Gotchas
 
 - **`next build` generates the `LayoutProps` global type.** Running `tsc --noEmit` on
