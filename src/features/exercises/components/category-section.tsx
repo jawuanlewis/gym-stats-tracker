@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Collapse } from "@/components/motion";
 import { LAYOUT_TRANSITION } from "@/lib/motion";
+import { useReveal } from "@/lib/reveal";
 
 import { persistCategoryCollapsed } from "../collapsed-categories";
 
@@ -27,6 +28,9 @@ export function CategorySection({
 }>) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const listId = `category-list-${id}`;
+  // A long list stops scrolling once its heading reaches the top of the screen.
+  const sectionRef = useRef<HTMLElement>(null);
+  useReveal(sectionRef, !collapsed);
 
   function toggle() {
     const next = !collapsed;
@@ -35,7 +39,7 @@ export function CategorySection({
   }
 
   return (
-    <section>
+    <section ref={sectionRef}>
       <h2>
         <button
           type="button"
