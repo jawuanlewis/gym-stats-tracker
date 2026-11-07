@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 
 import { FormError, useDismissibleError } from "@/components/form-error";
 import { Collapse, Fade, Stack } from "@/components/motion";
+import { useReveal } from "@/lib/reveal";
 
 import { createExerciseAction, type CreateState } from "../actions";
 import { CATEGORIES, CATEGORY_LABELS, type Category } from "../types";
@@ -23,6 +24,11 @@ export function AddExerciseForm() {
   const showError = useDismissibleError(state, open);
   const submitted = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  // It sits at the bottom of the page, so it always opens toward the screen edge;
+  // an error line growing in can push the submit button back off it.
+  useReveal(formRef, open);
+  useReveal(formRef, showError);
 
   // An empty state after a submit means the exercise was created — close up.
   useEffect(() => {
@@ -39,8 +45,10 @@ export function AddExerciseForm() {
 
   // The form is always mounted so it can ease open, which rules out `autoFocus`
   // (it would fire on page load). Runs after the form stops being inert.
+  // preventScroll: the reveal does the scrolling; a browser's own focus scroll
+  // would jump to the field and fight it.
   useEffect(() => {
-    if (open) nameRef.current?.focus();
+    if (open) nameRef.current?.focus({ preventScroll: true });
   }, [open]);
 
   // The button fades out in place while the form grows from the same spot.
@@ -58,6 +66,7 @@ export function AddExerciseForm() {
 
       <Collapse open={open}>
         <form
+          ref={formRef}
           action={formAction}
           className="space-y-4 rounded-2xl border border-border bg-surface p-4"
         >

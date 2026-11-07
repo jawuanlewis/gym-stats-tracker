@@ -1,8 +1,9 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 
 import { Collapse, Fade, Stack } from "@/components/motion";
+import { revealWhileGrowing, useReveal } from "@/lib/reveal";
 import { MINIMUMS, type Increments } from "@/lib/settings";
 
 import {
@@ -42,6 +43,9 @@ export function ExerciseCard({
   const [expanded, setExpanded] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // The whole card is revealed, not just its panel: the title row is what was tapped.
+  const cardRef = useRef<HTMLDivElement>(null);
+  useReveal(cardRef, expanded);
 
   function bumpWeight(direction: Direction) {
     startTransition(async () => {
@@ -67,6 +71,8 @@ export function ExerciseCard({
   }
 
   function appendSet() {
+    // Each new row pushes the Add set button down; keep it under the thumb.
+    if (cardRef.current) revealWhileGrowing(cardRef.current);
     startTransition(async () => {
       applyPatch({ sets: [...optimistic.sets, optimistic.sets.at(-1) ?? MINIMUMS.reps] });
       await addSetAction(exercise.id);
@@ -89,7 +95,7 @@ export function ExerciseCard({
   const panelId = `exercise-panel-${exercise.id}`;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+    <div ref={cardRef} className="overflow-hidden rounded-2xl border border-border bg-surface">
       <button
         type="button"
         onClick={() => setExpanded((open) => !open)}

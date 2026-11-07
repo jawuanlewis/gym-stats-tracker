@@ -22,6 +22,8 @@
  * - `animate-enter` — a fade-in for content that replaced something by
  *   remounting (a `key` change), where keeping both mounted is not practical.
  * - `<dialog>` needs nothing: globals.css fades every one.
+ * - `useReveal` (src/lib/reveal.ts) — scrolls along with something that opens
+ *   in place, so it does not grow off the bottom of the screen.
  *
  * The numbers themselves are the `--motion-*` variables in globals.css.
  */

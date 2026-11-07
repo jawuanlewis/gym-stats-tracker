@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 
 import { FormError, useDismissibleError } from "@/components/form-error";
+import { useReveal } from "@/lib/reveal";
 
 import { renameExerciseAction, type RenameState } from "../actions";
 
@@ -24,9 +25,13 @@ export function RenameForm({
   const showError = useDismissibleError(state, open);
   const succeeded = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // The form is the last thing in its card, so its error line grows toward the screen edge.
+  const formRef = useRef<HTMLFormElement>(null);
+  useReveal(formRef, showError);
 
+  // preventScroll: the field is already on screen — the Rename button it replaces was just tapped.
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    if (open) inputRef.current?.focus({ preventScroll: true });
   }, [open]);
 
   // A successful rename returns an empty state; close the form once that lands.
@@ -42,7 +47,7 @@ export function RenameForm({
   }, [pending, state, onDone]);
 
   return (
-    <form action={formAction}>
+    <form ref={formRef} action={formAction}>
       <div className="flex gap-2">
         <input
           name="name"
