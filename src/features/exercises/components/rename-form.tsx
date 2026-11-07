@@ -25,11 +25,14 @@ export function RenameForm({
   const showError = useDismissibleError(state, open);
   const succeeded = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  // The form is the last thing in its card, so its error line grows toward the screen edge.
+  // It crossfades in rather than growing, but the keyboard it brings up can still
+  // cover it; and as the last thing in its card, its error line grows toward the
+  // screen edge.
   const formRef = useRef<HTMLFormElement>(null);
+  useReveal(formRef, open);
   useReveal(formRef, showError);
 
-  // preventScroll: the field is already on screen — the Rename button it replaces was just tapped.
+  // preventScroll: the reveal does the scrolling, as in the add form.
   useEffect(() => {
     if (open) inputRef.current?.focus({ preventScroll: true });
   }, [open]);

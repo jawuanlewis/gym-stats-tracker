@@ -62,8 +62,9 @@ Three layers, innermost is the real boundary:
   `LAYOUT_TRANSITION` from `src/lib/motion.ts`; every `<dialog>` fades via `globals.css`.
   Timing is the `--motion-*` variables there. Bare `transition-colors` is tap feedback only.
 - **Anything the user opens in place is revealed** with `useReveal(ref, open)`
-  (`src/lib/reveal.ts`), or it grows off the bottom of a phone screen. Focus fields
-  with `focus({ preventScroll: true })` so the browser's own scroll does not fight it.
+  (`src/lib/reveal.ts`), or it grows off the bottom of a phone screen — even a form
+  that only fades in, since the keyboard it raises can cover it. Focus fields with
+  `focus({ preventScroll: true })` so the browser's own scroll does not fight it.
 - Content inside `Collapse`/`Fade` stays mounted while hidden, so it cannot use
   `autoFocus` — focus it in an effect when it opens (see `rename-form.tsx`).
   For the same reason a form's last error outlives a cancel: show errors through
