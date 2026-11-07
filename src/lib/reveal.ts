@@ -15,6 +15,10 @@ import { useEffect, useRef, type RefObject } from "react";
  * ends with its heading at the top, not its last item at the bottom), measures
  * against the visual viewport so an open keyboard counts as off screen, and
  * stops as soon as the user scrolls themselves.
+ *
+ * The keyboard opens on its own clock, often after the transition is over, so
+ * while the element is open and a text field inside it has focus, `useReveal`
+ * also reveals it again whenever the visible area shrinks.
  */
 
 /** Breathing room kept between the revealed element and the screen edge — the page gutter. */
@@ -53,6 +57,9 @@ export function revealWhileGrowing(element: HTMLElement): () => void {
 /**
  * Reveals the element in `ref` each time `open` turns true. Not on mount: a
  * section that starts open was not opened by anyone, and must not move the page.
+ *
+ * While it is open, the on-screen keyboard coming up over a field inside it
+ * reveals it again.
  */
 export function useReveal(ref: RefObject<HTMLElement | null>, open: boolean): void {
   const wasOpen = useRef(open);
@@ -64,6 +71,45 @@ export function useReveal(ref: RefObject<HTMLElement | null>, open: boolean): vo
     // Closing again mid-reveal stops it, rather than chasing a shrinking element.
     return revealWhileGrowing(ref.current);
   }, [ref, open]);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!open || !viewport) return;
+    let lastHeight = viewport.height;
+
+    // An arrow, not a function declaration: TypeScript keeps the null check
+    // above inside an arrow, but not inside a hoisted declaration.
+    const onResize = () => {
+      const shrank = viewport.height < lastHeight;
+      lastHeight = viewport.height;
+      // Only a shrink, and only with a field focused: that is the keyboard. A
+      // browser toolbar sliding away mid-scroll grows the viewport, and a focused
+      // button opens no keyboard — reacting to either would yank the page.
+      const element = ref.current;
+      if (
+        shrank &&
+        element &&
+        isTextEntry(document.activeElement) &&
+        element.contains(document.activeElement)
+      ) {
+        scrollToShow(element);
+      }
+    };
+
+    viewport.addEventListener("resize", onResize);
+    return () => viewport.removeEventListener("resize", onResize);
+  }, [ref, open]);
+}
+
+/** Whether focusing `element` brings up the on-screen keyboard. */
+function isTextEntry(element: Element | null): boolean {
+  if (element instanceof HTMLTextAreaElement) return true;
+  if (element instanceof HTMLInputElement) {
+    return !["button", "checkbox", "radio", "range", "reset", "submit", "hidden"].includes(
+      element.type,
+    );
+  }
+  return element instanceof HTMLElement && element.isContentEditable;
 }
 
 function scrollToShow(element: HTMLElement) {
