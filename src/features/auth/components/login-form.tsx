@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 
 import { Collapse } from "@/components/motion";
 
 import { loginAction, type LoginState } from "../actions";
+import { CODE_LENGTH, normalizeCode } from "../code";
 
 const fieldClass =
   "w-full rounded-lg border border-border bg-background px-3 py-3 text-base outline-none focus:border-accent";
@@ -22,6 +23,21 @@ export function LoginForm() {
   const onCodeStep = state.step === "code";
   const idleLabel = onCodeStep ? "Sign in" : "Email me a code";
   const busyLabel = onCodeStep ? "Checking…" : "Sending…";
+  const submitRef = useRef<HTMLButtonElement>(null);
+
+  // Keeps only the digits, and signs in as soon as the code is complete —
+  // whether it was typed, pasted, or filled in from the email by iOS AutoFill.
+  // Exactly complete, not "at least": a paste with extra digits is not
+  // guessed at. A rejected code needs no handling here; React resets the
+  // form's uncontrolled fields after every action, so the field comes back empty.
+  function handleCodeChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    // The field is uncontrolled (it is remounted per step), so tidy it in place.
+    input.value = normalizeCode(input.value);
+    if (input.value.length === CODE_LENGTH && !pending) {
+      input.form?.requestSubmit(submitRef.current);
+    }
+  }
 
   return (
     <form action={formAction} className="rounded-2xl border border-border bg-surface p-4">
@@ -42,7 +58,8 @@ export function LoginForm() {
                 name="code"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                pattern="[0-9 ]*"
+                pattern="[0-9]*"
+                onChange={handleCodeChange}
                 autoFocus
                 className={`${fieldClass} font-mono tracking-widest`}
               />
@@ -71,6 +88,7 @@ export function LoginForm() {
 
         {/* First in the form, so pressing Enter in the field submits this step. */}
         <button
+          ref={submitRef}
           type="submit"
           name="intent"
           value={onCodeStep ? "verify" : "send"}

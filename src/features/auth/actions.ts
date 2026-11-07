@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 
 import { getSupabase } from "@/lib/supabase";
 
+import { CODE_LENGTH, normalizeCode } from "./code";
+
 /**
  * Passwordless sign-in: email a one-time code, then verify it. Signing in and
  * signing up are the same flow — an unknown email gets an account created.
@@ -24,8 +26,6 @@ export type LoginState = {
 
 // Deliberately loose: the real check is whether the code arrives.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Supabase's code length is configurable (6 by default, up to 10).
-const CODE_PATTERN = /^\d{6,10}$/;
 
 function describe(error: AuthError, fallback: string): string {
   if (error.status === 429) return "Too many attempts. Wait a minute, then try again.";
@@ -66,8 +66,8 @@ export async function loginAction(_previous: LoginState, formData: FormData): Pr
     };
   }
 
-  const code = String(formData.get("code") ?? "").replace(/\s/g, "");
-  if (!CODE_PATTERN.test(code)) {
+  const code = normalizeCode(String(formData.get("code") ?? ""));
+  if (code.length !== CODE_LENGTH) {
     return { step: "code", email, error: "Enter the code from the email." };
   }
 

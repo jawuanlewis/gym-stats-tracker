@@ -62,8 +62,13 @@ to return another user's rows. Every Server Action also checks for a session fir
 Dashboard settings (Authentication):
 
 - **Email templates** — both **Magic Link** (returning users) and **Confirm signup**
-  (first sign-in for a new email): replace the link with the code, e.g.
-  `Your Gym Stats code is {{ .Token }}`.
+  (first sign-in for a new email) get the same content: paste
+  [`supabase/templates/sign-in-code.html`](supabase/templates/sign-in-code.html) as the
+  body, and set the subject to `Your Gym Stats code: {{ .Token }}`. Phrasing the code
+  as a code is what lets Gmail show its own "Copy code" button and iOS offer it above
+  the keyboard; the code in the subject also shows it in the notification.
+- **Email OTP Length** (Providers → Email) must equal `CODE_LENGTH` in
+  `src/features/auth/code.ts`, which the sign-in form counts to before submitting itself.
 - **SMTP**: Supabase's built-in sender is for testing — rate-limited and limited to
   project team members. Configure a custom SMTP provider before anyone else signs up.
 - **Sessions**: leave refresh tokens without a time-box so people stay signed in.
