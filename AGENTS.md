@@ -118,10 +118,10 @@ those plugins declare ESLint 10 support.
   credentials. Reversing it breaks the build (it tries to prerender `/login`).
 - **Under RLS, another user's row looks like no row.** `update().single()` returns
   PostgREST `PGRST116`, mapped to `ExerciseNotFoundError`.
-- **Supabase's built-in email is for testing only** (heavily rate-limited, team members
-  only). Open signup needs custom SMTP configured in the dashboard. Both the **Magic
-  Link** and **Confirm signup** templates must send `{{ .Token }}` — a new email gets
-  Confirm signup, not Magic Link.
+- **Supabase's built-in email is for testing only**; open signup needs custom SMTP. Both
+  **Magic Link** and **Confirm signup** (a new email gets this one) use
+  `supabase/templates/sign-in-code.html`. Dashboard **Email OTP Length** must equal
+  `CODE_LENGTH` (`src/features/auth/code.ts`): the form auto-submits at that length.
 - **SQL changes ship twice:** `schema.sql` is the fresh-project schema;
   `supabase/migrations/NNN_*.sql` upgrades existing databases. Keep them in sync.
 - **The preview tool resolves the `.claude/launch.json` in the parent workspace
