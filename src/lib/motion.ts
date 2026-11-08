@@ -19,6 +19,8 @@
  *
  * - `<Collapse>`, `<Fade>`, `<Stack>` (src/components/motion.tsx) — folding
  *   height, fading in place, and swapping one thing for another.
+ * - `<Presence>` (src/components/presence.tsx) — a list whose items fold in
+ *   when added and out when removed.
  * - `animate-enter` — a fade-in for content that replaced something by
  *   remounting (a `key` change), where keeping both mounted is not practical.
  * - `<dialog>` needs nothing: globals.css fades every one.
@@ -29,3 +31,17 @@
  */
 export const LAYOUT_TRANSITION =
   "duration-(--motion-duration) ease-(--motion-ease) motion-reduce:transition-none";
+
+/**
+ * `--motion-duration` in milliseconds, or 0 when reduced motion turns
+ * transitions off — for code that has to wait out a layout transition.
+ */
+export function motionDuration(): number {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue("--motion-duration")
+    .trim();
+  const amount = Number.parseFloat(value);
+  if (Number.isNaN(amount)) return 0;
+  return value.endsWith("ms") ? amount : amount * 1000;
+}

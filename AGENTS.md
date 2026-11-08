@@ -58,9 +58,10 @@ Three layers, innermost is the real boundary:
 - **Never hardcode a color.** Every color is a CSS variable in `globals.css` under
   `:root, [data-theme="dark"]`. Light mode is a future second block.
 - **Nothing snaps, and no transition is hand-written.** Use `Collapse` / `Fade` / `Stack`
-  from `src/components/motion.tsx`, the `animate-enter` class for keyed remounts, or
-  `LAYOUT_TRANSITION` from `src/lib/motion.ts`; every `<dialog>` fades via `globals.css`.
-  Timing is the `--motion-*` variables there. Bare `transition-colors` is tap feedback only.
+  from `src/components/motion.tsx`, `Presence` for lists that add/remove items (needs
+  stable keys: `usePositionalKeys` for id-less items like sets), `animate-enter` for keyed
+  remounts, or `LAYOUT_TRANSITION`; every `<dialog>` fades via `globals.css`. Timing is
+  the `--motion-*` variables there. Bare `transition-colors` is tap feedback only.
 - **Anything the user opens in place is revealed** with `useReveal(ref, open)`
   (`src/lib/reveal.ts`), or it grows off the bottom of a phone screen — even a form
   that only fades in, since the keyboard it raises can cover it. Focus fields with
@@ -98,8 +99,7 @@ those plugins declare ESLint 10 support.
 - **`refresh()` from `next/cache` is the Next 16 way** to re-render after a mutation
   from a Server Action. It only works inside Server Actions, not Route Handlers.
 - **The page needs `export const dynamic = "force-dynamic"`.** Without it the list is
-  prerendered as a static shell at build time, because nothing in it uses a dynamic
-  API that Next tracks.
+  prerendered as a static shell at build time: nothing in it uses a tracked dynamic API.
 - **`numeric` arrives from PostgREST as an unquoted JSON number**, so `weight`
   needs no conversion; the `Number()` in the row mapping is a guard, not a fix.
   (The "numeric is a string" gotcha is real but belongs to node-postgres.)

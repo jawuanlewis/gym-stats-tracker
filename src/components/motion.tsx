@@ -15,23 +15,32 @@ import { LAYOUT_TRANSITION } from "@/lib/motion";
  *
  * Animating a grid row between 0fr and 1fr is the way to transition to a
  * content-sized height without measuring it.
+ *
+ * `appear` also grows it open from zero when it first renders, through
+ * @starting-style — for content that is new, not merely shown. Leave it off
+ * for anything present on page load, which would otherwise unfold on arrival.
+ * `as="li"` lets it be a list item itself (see `<Presence>`).
  */
 export function Collapse({
   open,
   id,
+  appear = false,
+  as: Tag = "div",
   children,
 }: Readonly<{
   open: boolean;
   id?: string;
+  appear?: boolean;
+  as?: "div" | "li";
   children: React.ReactNode;
 }>) {
   return (
-    <div
+    <Tag
       id={id}
       inert={!open}
       className={`grid transition-[grid-template-rows,opacity] ${LAYOUT_TRANSITION} ${
         open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-      }`}
+      } ${appear ? "starting:grid-rows-[0fr] starting:opacity-0" : ""}`}
     >
       {/*
         clip, not hidden: `overflow: hidden` makes a scroll container, and
@@ -41,7 +50,7 @@ export function Collapse({
         so both axes are zeroed by hand.
       */}
       <div className="min-h-0 min-w-0 overflow-clip">{children}</div>
-    </div>
+    </Tag>
   );
 }
 
