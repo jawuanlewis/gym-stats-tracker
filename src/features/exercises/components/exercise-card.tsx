@@ -3,6 +3,8 @@
 import { useOptimistic, useRef, useState, useTransition } from "react";
 
 import { Collapse, Fade, Stack } from "@/components/motion";
+import { Presence } from "@/components/presence";
+import { usePositionalKeys } from "@/lib/positional-keys";
 import { revealWhileGrowing, useReveal } from "@/lib/reveal";
 import { MINIMUMS, type Increments } from "@/lib/settings";
 
@@ -46,6 +48,9 @@ export function ExerciseCard({
   // The whole card is revealed, not just its panel: the title row is what was tapped.
   const cardRef = useRef<HTMLDivElement>(null);
   useReveal(cardRef, expanded);
+  // Sets have no id of their own, only a position; these keep each row's identity
+  // so the one removed is the one that folds away.
+  const setKeys = usePositionalKeys(optimistic.sets.length);
 
   function bumpWeight(direction: Direction) {
     startTransition(async () => {
@@ -73,6 +78,7 @@ export function ExerciseCard({
   function appendSet() {
     // Each new row pushes the Add set button down; keep it under the thumb.
     if (cardRef.current) revealWhileGrowing(cardRef.current);
+    setKeys.append();
     startTransition(async () => {
       applyPatch({ sets: [...optimistic.sets, optimistic.sets.at(-1) ?? MINIMUMS.reps] });
       await addSetAction(exercise.id);
@@ -80,6 +86,7 @@ export function ExerciseCard({
   }
 
   function dropSet(setIndex: number) {
+    setKeys.remove(setIndex);
     startTransition(async () => {
       applyPatch({ sets: optimistic.sets.filter((_, index) => index !== setIndex) });
       await removeSetAction(exercise.id, setIndex);
@@ -124,33 +131,44 @@ export function ExerciseCard({
 
         <Collapse id={panelId} open={expanded}>
           <div className="space-y-4 border-t border-border bg-surface-raised/40 px-4 py-4">
-            <ul className="space-y-2">
-              {optimistic.sets.map((reps, index) => (
-                // Sets are positional and have no stable id; the index is the identity.
-                <li key={index} className="flex items-center justify-between gap-2">
-                  <span className="text-sm text-muted">Set {index + 1}</span>
-                  <div className="flex items-center gap-1">
-                    <Stepper
-                      size="sm"
-                      value={String(reps)}
-                      unit="reps"
-                      label={`reps for set ${index + 1} of ${optimistic.name}`}
-                      onAdjust={(direction) => bumpReps(index, direction)}
-                      canDecrease={reps > MINIMUMS.reps}
-                    />
-                    <button
-                      type="button"
-                      aria-label={`Remove set ${index + 1}`}
-                      onClick={() => dropSet(index)}
-                      disabled={optimistic.sets.length <= 1}
-                      className="ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors active:text-danger disabled:opacity-25"
+            {/*
+              Rows are spaced by their own padding, which Presence folds away with
+              them; -my-1 cancels it at the ends. The wrapper lets that negative
+              margin collapse into the parent's space-y rather than replace it.
+            */}
+            <div>
+              <ul className="-my-1">
+                <Presence>
+                  {optimistic.sets.map((reps, index) => (
+                    <div
+                      key={setKeys.keys[index]}
+                      className="flex items-center justify-between gap-2 py-1"
                     >
-                      &times;
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      <span className="text-sm text-muted">Set {index + 1}</span>
+                      <div className="flex items-center gap-1">
+                        <Stepper
+                          size="sm"
+                          value={String(reps)}
+                          unit="reps"
+                          label={`reps for set ${index + 1} of ${optimistic.name}`}
+                          onAdjust={(direction) => bumpReps(index, direction)}
+                          canDecrease={reps > MINIMUMS.reps}
+                        />
+                        <button
+                          type="button"
+                          aria-label={`Remove set ${index + 1}`}
+                          onClick={() => dropSet(index)}
+                          disabled={optimistic.sets.length <= 1}
+                          className="ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors active:text-danger disabled:opacity-25"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </Presence>
+              </ul>
+            </div>
 
             <button
               type="button"

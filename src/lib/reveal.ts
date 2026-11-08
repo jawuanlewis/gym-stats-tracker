@@ -1,5 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react";
 
+import { motionDuration } from "./motion";
+
 /**
  * Something that opens in place grows downward, and near the bottom of the
  * screen it grows out of view: the page does not follow it on its own. Revealing
@@ -124,15 +126,4 @@ function scrollToShow(element: HTMLElement) {
   const distance = Math.min(overflow, roomAbove);
   // Sub-pixel distances would scroll by a rounded zero forever; skip them.
   if (distance >= 1) window.scrollBy(0, distance);
-}
-
-/** `--motion-duration` in milliseconds, or 0 when reduced motion turns transitions off. */
-function motionDuration(): number {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
-  const value = getComputedStyle(document.documentElement)
-    .getPropertyValue("--motion-duration")
-    .trim();
-  const amount = Number.parseFloat(value);
-  if (Number.isNaN(amount)) return 0;
-  return value.endsWith("ms") ? amount : amount * 1000;
 }
