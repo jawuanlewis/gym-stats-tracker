@@ -19,28 +19,39 @@ import { LAYOUT_TRANSITION } from "@/lib/motion";
  * `appear` also grows it open from zero when it first renders, through
  * @starting-style — for content that is new, not merely shown. Leave it off
  * for anything present on page load, which would otherwise unfold on arrival.
- * `as="li"` lets it be a list item itself (see `<Presence>`).
+ * `as="li"` lets it be a list item itself (see `<Presence>`). `ref`, `style`
+ * and `className` reach that outer element, for a list item that something
+ * else also positions — a sortable card's drag transform, which has to sit
+ * outside the clip below or the dragged card would be cut off.
  */
 export function Collapse({
   open,
   id,
   appear = false,
   as: Tag = "div",
+  ref,
+  style,
+  className = "",
   children,
 }: Readonly<{
   open: boolean;
   id?: string;
   appear?: boolean;
   as?: "div" | "li";
+  ref?: React.RefCallback<HTMLElement>;
+  style?: React.CSSProperties;
+  className?: string;
   children: React.ReactNode;
 }>) {
   return (
     <Tag
       id={id}
+      ref={ref}
+      style={style}
       inert={!open}
       className={`grid transition-[grid-template-rows,opacity] ${LAYOUT_TRANSITION} ${
         open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-      } ${appear ? "starting:grid-rows-[0fr] starting:opacity-0" : ""}`}
+      } ${appear ? "starting:grid-rows-[0fr] starting:opacity-0" : ""} ${className}`}
     >
       {/*
         clip, not hidden: `overflow: hidden` makes a scroll container, and

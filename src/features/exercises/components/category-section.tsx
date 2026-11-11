@@ -68,7 +68,8 @@ export function CategorySection({
         </button>
       </h2>
       <Collapse id={listId} open={!collapsed}>
-        <ul className="mt-1 space-y-3">{children}</ul>
+        {/* Cards space themselves (see ExerciseList); -mb-3 cancels the last gap. */}
+        <ul className="mt-1 -mb-3">{children}</ul>
       </Collapse>
     </section>
   );

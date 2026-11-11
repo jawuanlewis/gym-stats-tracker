@@ -14,8 +14,7 @@ Mobile-first gym tracker: a list of exercises, each with a weight and per-set re
 edited by tapping steppers. Replaces a Google Sheet. Multi-user: passwordless
 sign-in (emailed one-time code) via Supabase Auth, open signup.
 
-> The heading above sits below the Next.js managed block because `next dev` rewrites
-> that block at the top of this file on every run. Keep it that way.
+> This heading sits below the Next.js block because `next dev` rewrites that block. Keep it so.
 
 ## Architecture
 
@@ -62,6 +61,8 @@ Three layers, innermost is the real boundary:
   stable keys: `usePositionalKeys` for id-less items like sets), `animate-enter` for keyed
   remounts, or `LAYOUT_TRANSITION`; every `<dialog>` fades via `globals.css`. Timing is
   the `--motion-*` variables there. Bare `transition-colors` is tap feedback only.
+  Sortable `Presence` items use `wrap={false}` + `<PresenceItem>` (ref and transform outside
+  the fold's `overflow-clip`). That clip cuts off rings drawn outside a box: draw them inset.
 - **Anything the user opens in place is revealed** with `useReveal(ref, open)`
   (`src/lib/reveal.ts`), or it grows off the bottom of a phone screen — even a form
   that only fades in, since the keyboard it raises can cover it. Focus fields with

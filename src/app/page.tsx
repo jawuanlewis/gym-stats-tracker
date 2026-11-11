@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { Collapse, Fade } from "@/components/motion";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { requireUser } from "@/features/auth/session";
 import {
@@ -40,32 +41,47 @@ export default async function HomePage() {
             {user.email ? <p className="mt-1 truncate text-xs text-muted">{user.email}</p> : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {exercises.length > 1 ? <EditModeToggle /> : null}
+            {/* Always rendered, so it fades in once there are two cards to reorder. */}
+            <Fade show={exercises.length > 1}>
+              <EditModeToggle />
+            </Fade>
             <SignOutButton email={user.email} />
           </div>
         </header>
 
-        <div className="space-y-8">
-          {exercises.length === 0 ? (
-            <p className="rounded-2xl border border-border bg-surface px-4 py-8 text-center text-sm text-muted">
-              Nothing tracked yet. Add your first exercise below.
-            </p>
-          ) : null}
+        {/*
+          The empty state and every category are always rendered, folded shut
+          while they have nothing to show: a section unfolds with its first
+          exercise and folds away with its last, and nothing animates on load.
+          So each spaces itself with padding inside its fold (pb-8), rather than
+          the space-y-* this would otherwise use, which would leave a gap around
+          a folded one.
+        */}
+        <div>
+          <Collapse open={exercises.length === 0}>
+            <div className="pb-8">
+              <p className="rounded-2xl border border-border bg-surface px-4 py-8 text-center text-sm text-muted">
+                Nothing tracked yet. Add your first exercise below.
+              </p>
+            </div>
+          </Collapse>
 
           {CATEGORIES.map((category) => {
             const inCategory = exercises.filter((exercise) => exercise.category === category);
-            if (inCategory.length === 0) return null;
 
             return (
-              <CategorySection
-                key={category}
-                id={category}
-                label={CATEGORY_LABELS[category]}
-                count={inCategory.length}
-                defaultCollapsed={collapsed.has(category)}
-              >
-                <ExerciseList exercises={inCategory} increments={increments} />
-              </CategorySection>
+              <Collapse key={category} open={inCategory.length > 0}>
+                <div className="pb-8">
+                  <CategorySection
+                    id={category}
+                    label={CATEGORY_LABELS[category]}
+                    count={inCategory.length}
+                    defaultCollapsed={collapsed.has(category)}
+                  >
+                    <ExerciseList exercises={inCategory} increments={increments} />
+                  </CategorySection>
+                </div>
+              </Collapse>
             );
           })}
 
