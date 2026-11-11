@@ -1,6 +1,15 @@
 "use client";
 
-import { Children, isValidElement, useEffect, useState, type Key, type ReactElement } from "react";
+import {
+  Children,
+  createContext,
+  isValidElement,
+  useContext,
+  useEffect,
+  useState,
+  type Key,
+  type ReactElement,
+} from "react";
 
 import { motionDuration } from "@/lib/motion";
 
@@ -27,8 +36,15 @@ type Entry = {
  *
  * Space items with padding inside them, not `space-y-*` or `gap-*` on the
  * list: those leave a gap around an item that has folded to nothing.
+ *
+ * `wrap={false}` leaves the `<li>` to each child, which must then render a
+ * `<PresenceItem>` as its root — for an item that needs the list item itself,
+ * like a sortable card passing its node ref and drag transform.
  */
-export function Presence({ children }: Readonly<{ children: React.ReactNode }>) {
+export function Presence({
+  wrap = true,
+  children,
+}: Readonly<{ wrap?: boolean; children: React.ReactNode }>) {
   const [entries, setEntries] = useState<Entry[]>(() =>
     toElements(children).map((element) => ({
       key: element.key!,
@@ -64,10 +80,54 @@ export function Presence({ children }: Readonly<{ children: React.ReactNode }>) 
   }, [leaving]);
 
   return rendered.map((entry) => (
-    <Collapse key={entry.key} as="li" open={entry.present} appear={entry.added}>
-      {entry.element}
-    </Collapse>
+    <ItemContext key={entry.key} value={entry.present ? entry.added : null}>
+      {wrap ? <PresenceItem>{entry.element}</PresenceItem> : entry.element}
+    </ItemContext>
   ));
+}
+
+/**
+ * Per item: whether it grows in on arrival (`added`), or `null` while it folds
+ * away. A boolean rather than an object, so the context value is stable
+ * across renders.
+ */
+const ItemContext = createContext<boolean | null | undefined>(undefined);
+
+/**
+ * The `<li>` that folds one `<Presence>` item in and out. Rendered for you
+ * unless the list has `wrap={false}`; `ref`, `style` and `className` reach the
+ * `<li>`.
+ */
+export function PresenceItem({
+  ref,
+  style,
+  className,
+  children,
+}: Readonly<{
+  ref?: React.RefCallback<HTMLElement>;
+  style?: React.CSSProperties;
+  className?: string;
+  children: React.ReactNode;
+}>) {
+  const state = useContext(ItemContext);
+  if (state === undefined) throw new Error("PresenceItem is used outside <Presence>");
+  return (
+    <Collapse
+      as="li"
+      open={state !== null}
+      appear={state === true}
+      ref={ref}
+      style={style}
+      className={className}
+    >
+      {children}
+    </Collapse>
+  );
+}
+
+/** False while the surrounding `<Presence>` item is folding away after removal. */
+export function useIsPresent(): boolean {
+  return useContext(ItemContext) !== null;
 }
 
 function toElements(children: React.ReactNode): ReactElement[] {

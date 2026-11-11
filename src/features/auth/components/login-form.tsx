@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 
 import { Collapse } from "@/components/motion";
 
@@ -42,49 +42,51 @@ export function LoginForm() {
   return (
     <form action={formAction} className="rounded-2xl border border-border bg-surface p-4">
       <div className="space-y-4">
-        {/*
-          The two steps have the same shape, so only the field is swapped. Keying
-          it remounts it on each step: it fades in, and `autoFocus` fires again.
-        */}
-        <div key={state.step} className="animate-enter space-y-2">
-          {onCodeStep ? (
-            <>
-              <input type="hidden" name="email" value={state.email} />
-              <label htmlFor="code" className="text-sm text-muted">
-                Code sent to <span className="text-foreground">{state.email}</span>
-              </label>
-              <input
-                id="code"
-                name="code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]*"
-                onChange={handleCodeChange}
-                autoFocus
-                className={`${fieldClass} font-mono tracking-widest`}
-              />
-            </>
-          ) : (
-            <>
-              <label htmlFor="email" className="text-sm text-muted">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                defaultValue={state.email}
-                autoFocus
-                required
-                className={fieldClass}
-              />
-            </>
-          )}
+        {/* One wrapper, so the folded message leaves no space-y gap behind. */}
+        <div>
+          {/*
+            The two steps have the same shape, so only the field is swapped. Keying
+            it remounts it on each step: it fades in, and `autoFocus` fires again.
+          */}
+          <div key={state.step} className="animate-enter space-y-2">
+            {onCodeStep ? (
+              <>
+                <input type="hidden" name="email" value={state.email} />
+                <label htmlFor="code" className="text-sm text-muted">
+                  Code sent to <span className="text-foreground">{state.email}</span>
+                </label>
+                <input
+                  id="code"
+                  name="code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]*"
+                  onChange={handleCodeChange}
+                  autoFocus
+                  className={`${fieldClass} font-mono tracking-widest`}
+                />
+              </>
+            ) : (
+              <>
+                <label htmlFor="email" className="text-sm text-muted">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  defaultValue={state.email}
+                  autoFocus
+                  required
+                  className={fieldClass}
+                />
+              </>
+            )}
+          </div>
+          <Messages state={state} />
         </div>
-
-        <Messages state={state} />
 
         {/* First in the form, so pressing Enter in the field submits this step. */}
         <button
@@ -127,8 +129,28 @@ export function LoginForm() {
   );
 }
 
+/**
+ * The step's error or notice, folding open and closed like `FormError`. The
+ * last message stays rendered while it folds away, so it does not blank
+ * mid-animation. `pt-4` is the gap above it, inside the fold.
+ */
 function Messages({ state }: Readonly<{ state: LoginState }>) {
-  if (state.error) return <p className="text-sm text-danger">{state.error}</p>;
-  if (state.notice) return <p className="text-sm text-muted">{state.notice}</p>;
-  return null;
+  const current = state.error
+    ? { text: state.error, className: "text-danger" }
+    : state.notice
+      ? { text: state.notice, className: "text-muted" }
+      : null;
+  const [last, setLast] = useState(current);
+  // Adjusting state during render, not in an effect, so the new message is in
+  // the first frame that unfolds it.
+  if (current && (current.text !== last?.text || current.className !== last.className)) {
+    setLast(current);
+  }
+  const shown = current ?? last;
+
+  return (
+    <Collapse open={current !== null}>
+      <p className={`pt-4 text-sm ${shown?.className ?? ""}`}>{shown?.text}</p>
+    </Collapse>
+  );
 }
